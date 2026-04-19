@@ -1,0 +1,554 @@
+{
+	"info": {
+		"_postman_id": "teamboard-api-collection",
+		"name": "TeamBoard API Collection",
+		"description": "Complete test suite for TeamBoard B2B Knowledge Base API. Covers all 4 endpoints with 11 test scenarios including success cases, validation errors, authentication failures, and permission checks.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "admin_token",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "1. Register — Success (201)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Response has required fields', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('username');",
+									"    pm.expect(json).to.have.property('company_name');",
+									"    pm.expect(json).to.have.property('api_key');",
+									"    pm.expect(json).to.have.property('access');",
+									"});",
+									"pm.test('Username matches request', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json.username).to.eql('testcorp');",
+									"});",
+									"pm.test('Company name matches request', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json.company_name).to.eql('Test Corp');",
+									"});",
+									"// Save token for later use",
+									"var json = pm.response.json();",
+									"pm.collectionVariables.set('access_token', json.access);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testcorp\",\n    \"password\": \"securepass123\",\n    \"company_name\": \"Test Corp\",\n    \"email\": \"dev@testcorp.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register", ""]
+						}
+					}
+				},
+				{
+					"name": "2. Register — Duplicate Username (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 400', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test('Error message about duplicate username', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('error');",
+									"    pm.expect(json.error).to.include('already exists');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testcorp\",\n    \"password\": \"securepass123\",\n    \"company_name\": \"Test Corp\",\n    \"email\": \"dev@testcorp.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register", ""]
+						}
+					}
+				},
+				{
+					"name": "3. Login — Success (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response has access token', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('access');",
+									"    pm.expect(json.access).to.be.a('string');",
+									"});",
+									"pm.test('Response has company_name and api_key', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('company_name');",
+									"    pm.expect(json).to.have.property('api_key');",
+									"});",
+									"// Save token for later use",
+									"var json = pm.response.json();",
+									"pm.collectionVariables.set('access_token', json.access);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testcorp\",\n    \"password\": \"securepass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "4. Login — Invalid Credentials (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test('Error message about invalid credentials', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('error');",
+									"    pm.expect(json.error).to.include('Invalid');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testcorp\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Knowledge Base",
+			"item": [
+				{
+					"name": "5. KB Query — Success with Results (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response has search, count, and results', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('search');",
+									"    pm.expect(json).to.have.property('count');",
+									"    pm.expect(json).to.have.property('results');",
+									"});",
+									"pm.test('Count matches results array length', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json.count).to.eql(json.results.length);",
+									"});",
+									"pm.test('Each result has id, question, answer, category', function () {",
+									"    var json = pm.response.json();",
+									"    if (json.results.length > 0) {",
+									"        var r = json.results[0];",
+									"        pm.expect(r).to.have.property('id');",
+									"        pm.expect(r).to.have.property('question');",
+									"        pm.expect(r).to.have.property('answer');",
+									"        pm.expect(r).to.have.property('category');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"search\": \"select_related\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/kb/query/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "kb", "query", ""]
+						}
+					}
+				},
+				{
+					"name": "6. KB Query — No Results (200 with empty list)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Count is 0', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json.count).to.eql(0);",
+									"});",
+									"pm.test('Results is empty array', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json.results).to.be.an('array').that.is.empty;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"search\": \"xyznonexistentterm123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/kb/query/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "kb", "query", ""]
+						}
+					}
+				},
+				{
+					"name": "7. KB Query — Missing Search Field (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 400', function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test('Error message about missing search', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/kb/query/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "kb", "query", ""]
+						}
+					}
+				},
+				{
+					"name": "8. KB Query — No Token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test('Authentication error message', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"search\": \"select_related\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/kb/query/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "kb", "query", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "9. Usage Summary — Client Role (403)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 403', function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/usage-summary/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "usage-summary", ""]
+						}
+					}
+				},
+				{
+					"name": "10. Usage Summary — No Token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 401', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/usage-summary/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "usage-summary", ""]
+						}
+					}
+				},
+				{
+					"name": "11. Usage Summary — Admin Role (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Response has total_queries', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('total_queries');",
+									"    pm.expect(json.total_queries).to.be.a('number');",
+									"});",
+									"pm.test('Response has active_companies', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('active_companies');",
+									"    pm.expect(json.active_companies).to.be.a('number');",
+									"});",
+									"pm.test('Response has top_search_terms as array', function () {",
+									"    var json = pm.response.json();",
+									"    pm.expect(json).to.have.property('top_search_terms');",
+									"    pm.expect(json.top_search_terms).to.be.an('array');",
+									"});",
+									"pm.test('Top search terms have search_term and count', function () {",
+									"    var json = pm.response.json();",
+									"    if (json.top_search_terms.length > 0) {",
+									"        var t = json.top_search_terms[0];",
+									"        pm.expect(t).to.have.property('search_term');",
+									"        pm.expect(t).to.have.property('count');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/usage-summary/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "usage-summary", ""]
+						}
+					}
+				}
+			]
+		}
+	]
+}
